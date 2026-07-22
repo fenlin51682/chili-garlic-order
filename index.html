@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>辣椒蒜頭訂貨系統</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 16px; }
+
+/* 頂部 */
+.header { text-align: center; padding: 20px 0; }
+.header h1 { font-size: 24px; font-weight: 700; color: #1a1a1a; }
+.header p { font-size: 13px; color: #888; margin-top: 4px; }
+
+/* 導航 */
+.nav { display: flex; gap: 6px; background: #eee; padding: 4px; border-radius: 12px; margin-bottom: 20px; overflow-x: auto; }
+.nav-btn { flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #666; white-space: nowrap; transition: all 0.2s; }
+.nav-btn.active { background: white; color: #ff6b35; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+/* 卡片 */
+.card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.card-title { font-size: 17px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+/* 表單 */
+input, select, button { font-family: inherit; }
+input[type="text"], input[type="password"], input[type="number"], select {
+  width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: #ff6b35; }
+label { font-size: 12px; color: #666; font-weight: 500; display: block; margin-bottom: 4px; }
+
+/* 按鈕 */
+.btn-primary { background: linear-gradient(135deg, #ff6b35, #f7931e); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,53,0.35); }
+.btn-secondary { background: #f5f5f5; color: #666; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.btn-danger { background: #fff; color: #e53935; border: 1.5px solid #e53935; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.btn-export { background: #fff; color: #ff6b35; border: 1.5px solid #ff6b35; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.btn-small { padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; border: none; }
+
+/* 表格 */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #eee; background: #fafafa; }
+td { padding: 10px; border-bottom: 1px solid #f0f0f0; }
+
+/* 統計卡片 */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat-card { border-radius: 12px; padding: 16px; text-align: center; }
+.stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: 700; }
+
+/* 價格卡片 */
+.price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.price-item { border-radius: 12px; padding: 14px; }
+.price-item.chili { background: linear-gradient(135deg, #fff5f0, #ffeee0); border: 1px solid #ffd0b0; }
+.price-item.garlic { background: linear-gradient(135deg, #f0fff4, #e0f7e8); border: 1px solid #c8e6c9; }
+.price-name { font-weight: 600; margin-bottom: 6px; }
+.price-input { display: flex; gap: 6px; align-items: center; }
+.price-input input { flex: 1; padding: 8px 10px; font-size: 14px; }
+.price-input span { font-size: 12px; color: #888; white-space: nowrap; }
+
+/* 購物車 */
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fafafa; border-radius: 8px; margin-bottom: 6px; }
+.cart-total { margin-top: 12px; padding: 14px; background: linear-gradient(135deg, #fff5f0, #ffeee0); border-radius: 10px; text-align: right; font-size: 16px; font-weight: 700; color: #e65100; }
+
+/* 狀態標籤 */
+.badge { padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.badge-pending { background: #fff3e0; color: #e65100; }
+.badge-shipped { background: #e3f2fd; color: #1565c0; }
+.badge-done { background: #e8f5e9; color: #2e7d32; }
+.badge-paid { background: #e8f5e9; color: #2e7d32; }
+.badge-unpaid { background: #fff3e0; color: #e65100; }
+
+/* 出貨卡片 */
+.ship-card { background: #fafafa; border-radius: 10px; padding: 14px; border: 1px solid #eee; margin-bottom: 10px; }
+.ship-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ship-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; }
+
+/* 預覽 */
+.preview-box { background: #fafafa; border-radius: 10px; padding: 12px 16px; border-left: 4px solid #ff6b35; margin-bottom: 12px; }
+
+/* 空狀態 */
+.empty { text-align: center; color: #bbb; padding: 30px; }
+.empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+/* 響應式 */
+@media (max-width: 600px) {
+  .form-row { grid-template-columns: 1fr !important; }
+  .price-grid { grid-template-columns: 1fr 1fr; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🌶️ 辣椒蒜頭訂貨系統</h1>
+    <p>客戶前台叫貨 · 管理後台 · 出貨追蹤 · 月結報表</p>
+  </div>
+
+  <!-- 導航 -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('customer')">🛒 客戶前台</button>
+    <button class="nav-btn" onclick="switchTab('admin')">⚙️ 管理後台</button>
+    <button class="nav-btn" onclick="switchTab('ship')">🚚 出貨管理</button>
+    <button class="nav-btn" onclick="switchTab('report')">📊 月結報表</button>
+  </div>
+
+  <!-- ========== 客戶前台 ========== -->
+  <div id="tab-customer" class="tab-content">
+    <!-- 登入 -->
+    <div id="cust-login" class="card" style="max-width: 400px; margin: 0 auto; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 8px;">🌶️</div>
+      <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">客戶登入</div>
+      <div style="font-size: 13px; color: #888; margin-bottom: 20px;">輸入您的店名即可開始叫貨</div>
+      <div style="text-align: left; margin-bottom: 12px;">
+        <label>店名 / 客戶名稱</label>
+        <input type="text" id="login-name" placeholder="例如：老王小吃">
+      </div>
+      <div style="text-align: left; margin-bottom: 16px;">
+        <label>密碼（首次使用免填，自動註冊）</label>
+        <input type="password" id="login-pass" placeholder="留空即可">
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="customerLogin()">登入 / 註冊</button>
+    </div>
+
+    <!-- 叫貨介面 -->
+    <div id="cust-order" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div>
+            <div class="card-title" style="margin:0">🛒 今日叫貨</div>
+            <div style="font-size:13px; color:#888;">歡迎，<span id="welcome-name" style="color:#ff6b35; font-weight:600"></span></div>
+          </div>
+          <button class="btn-secondary" onclick="customerLogout()">登出</button>
+        </div>
+
+        <!-- 今日價格 -->
+        <div style="background:linear-gradient(135deg, #fff8e1, #ffecb3); border-radius:12px; padding:14px; margin-bottom:16px; border:1px solid #ffe082;">
+          <div style="font-size:13px; font-weight:600; color:#e65100; margin-bottom:8px;">📊 今日進貨單價（元/台斤）</div>
+          <div id="price-display" class="price-grid" style="font-size:12px;"></div>
+        </div>
+
+        <!-- 叫貨表單 -->
+        <div class="form-row" style="display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:12px;">
+          <div>
+            <label>商品</label>
+            <select id="order-product" onchange="updatePreview()">
+              <option value="">選擇商品</option>
+              <option value="chili_fine">🌶️ 辣椒-切細粒</option>
+              <option value="chili_coarse">🌶️ 辣椒-切粗粒</option>
+              <option value="garlic_fine">🧄 蒜頭-切細粒</option>
+              <option value="garlic_coarse">🧄 蒜頭-切粗粒</option>
+              <option value="garlic_peeled">🧄 蒜頭-去皮</option>
+              <option value="garlic_whole">🧄 蒜頭-全顆</option>
+            </select>
+          </div>
+          <div>
+            <label>每份重量</label>
+            <input type="number" id="order-qty" placeholder="重量" step="0.1" oninput="updatePreview()">
+          </div>
+          <div>
+            <label>單位</label>
+            <select id="order-unit" onchange="updatePreview()">
+              <option value="jin">台斤</option>
+              <option value="liang">台兩</option>
+              <option value="g">公克</option>
+            </select>
+          </div>
+          <div>
+            <label>份數</label>
+            <input type="number" id="order-copies" placeholder="份數" min="1" value="1" oninput="updatePreview()">
+          </div>
+          <button class="btn-primary" onclick="addToCart()">➕ 加入</button>
+        </div>
+        <div id="order-preview" class="preview-box hidden">
+          <div style="font-size:13px; color:#666;">預覽：<span id="preview-text" style="font-weight:600; color:#333;"></span></div>
+        </div>
+      </div>
+
+      <!-- 購物車 -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:16px; font-weight:600;">🛒 購物車</div>
+          <span id="cart-count" style="background:#ff6b35; color:white; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;">0 項</span>
+        </div>
+        <div id="cart-items"><div class="empty"><div class="empty-icon">📭</div><div>尚未加入任何商品</div></div></div>
+        <div id="cart-total" class="cart-total hidden"></div>
+        <button id="btn-submit" class="btn-primary" style="width:100%; margin-top:12px; display:none;" onclick="submitOrder()">✅ 確認送出訂單</button>
+      </div>
+
+      <!-- 歷史訂單 -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px;">📋 我的歷史訂單</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>日期</th><th>商品</th><th style="text-align:right">金額</th><th style="text-align:center">狀態</th></tr></thead>
+            <tbody id="cust-history"><tr><td colspan="4" class="empty"><div class="empty-icon">📭</div>尚無歷史訂單</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 月結報表 ========== -->
+  <div id="tab-report" class="tab-content hidden">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <div class="card-title" style="margin:0">📊 月結算報表</div>
+        <div style="display:flex; gap:8px;">
+          <select id="rep-month" style="padding:8px 12px; border:1px solid #e0e0e0; border-radius:8px; font-size:13px;">
+            <option value="2026-07">2026年7月</option>
+            <option value="2026-06">2026年6月</option>
+          </select>
+          <button class="btn-primary" onclick="generateReport()">產生報表</button>
+          <button class="btn-export" onclick="exportReportCSV()">匯出</button>
+        </div>
+      </div>
+
+      <div id="report-content" class="hidden">
+        <div class="stat-grid">
+          <div class="stat-card" style="background:linear-gradient(135deg, #fff3e0, #ffe0b2); border:1px solid #ffcc80;"><div class="stat-label">總營業額</div><div class="stat-value" id="rep-total-rev" style="color:#e65100">$0</div></div>
+          <div class="stat-card" style="background:linear-gradient(135deg, #e8f5e9, #c8e6c9); border:1px solid #a5d6a7;"><div class="stat-label">訂單筆數</div><div class="stat-value" id="rep-total-orders" style="color:#2e7d32">0</div></div>
+          <div class="stat-card" style="background:linear-gradient(135deg, #e3f2fd, #bbdefb); border:1px solid #90caf9;"><div class="stat-label">活躍客戶</div><div class="stat-value" id="rep-active" style="color:#1565c0">0</div></div>
+          <div class="stat-card" style="background:linear-gradient(135deg, #fce4ec, #f8bbd9); border:1px solid #f48fb1;"><div class="stat-label">平均單價</div><div class="stat-value" id="rep-avg" style="color:#c2185b">$0</div></div>
+        </div>
+
+        <h3 style="font-size:14px; font-weight:600; color:#555; margin:16px 0 10px;">📋 各客戶月結明細</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>客戶</th><th style="text-align:center">訂單數</th><th style="text-align:right">總金額</th><th style="text-align:right">已付</th><th style="text-align:right">未付</th><th style="text-align:center">狀態</th></tr></thead>
+            <tbody id="rep-table"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="rep-empty" class="empty"><div class="empty-icon">📭</div>選擇月份後點擊「產生報表」</div>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <div style="text-align:center; padding:20px; font-size:12px; color:#aaa;">
+    辣椒蒜頭訂貨系統 v1.0 · 資料儲存在本機瀏覽器 · 建議每日匯出備份
+  </div>
+</div>
+
+<script>
+// ==================== 資料層 ====================
+const PRODUCTS = {
+  chili_fine: { name: '辣椒-切細粒', icon: '🌶️', type: 'chili' },
+  chili_coarse: { name: '辣椒-切粗粒', icon: '🌶️', type: 'chili' },
+  garlic_fine: { name: '蒜頭-切細粒', icon: '🧄', type: 'garlic' },
+  garlic_coarse: { name: '蒜頭-切粗粒', icon: '🧄', type: 'garlic' },
+  garlic_peeled: { name: '蒜頭-去皮', icon: '🧄', type: 'garlic' },
+  garlic_whole: { name: '蒜頭-全顆', icon: '🧄', type: 'garlic' }
+};
+const UNIT_NAMES = { jin: '台斤', liang: '台兩', g: '公克' };
+const UNIT_TO_JIN = { jin: 1, liang: 1/16, g: 1/600 };
+
+// localStorage 金鑰
+const LS_KEYS = {
+  prices: 'cg_prices',
+  orders: 'cg_orders',
+  customers: 'cg_customers',
+  currentUser: 'cg_currentUser'
+};
+
+// 預設價格
+const DEFAULT_PRICES = {
+  chili_fine: 68, chili_coarse: 65, garlic_fine: 72,
+  garlic_coarse: 70, garlic_peeled: 85, garlic_whole: 55
+};
+
+// 預設客戶
+const DEFAULT_CUSTOMERS = [
+  { id: 1, name: '老王小吃', phone: '0912-345-678', paid: 0 },
+  { id: 2, name: '阿美餐廳', phone: '0923-456-789', paid: 2000 },
+  { id: 3, name: '大鼎熱炒', phone: '0934-567-890', paid: 0 },
+  { id: 4, name: '福記食堂', phone: '0945-678-901', paid: 1890 },
+  { id: 5, name: '金門海產', phone: '0956-789-012', paid: 0 }
+];
+
+// ==================== 工具函數 ====================
+function getPrices() {
+  const saved = localStorage.getItem(LS_KEYS.prices);
+  return saved ? JSON.parse(saved) : { ...DEFAULT_PRICES };
+}
+function setPrices(p) { localStorage.setItem(LS_KEYS.prices, JSON.stringify(p)); }
+
+function getOrders() {
+  const saved = localStorage.getItem(LS_KEYS.orders);
+  if (saved) return JSON.parse(saved);
+  // 首次載入產生模擬資料
+  const mock = generateMockOrders();
+  localStorage.setItem(LS_KEYS.orders, JSON.stringify(mock));
+  return mock;
+}
+function setOrders(o) { localStorage.setItem(LS_KEYS.orders, JSON.stringify(o)); }
+
+function getCustomers() {
+  const saved = localStorage.getItem(LS_KEYS.customers);
+  return saved ? JSON.parse(saved) : [...DEFAULT_CUSTOMERS];
+}
+function setCustomers(c) { localStorage.setItem(LS_KEYS.customers, JSON.stringify(c)); }
+
+function getCurrentUser() {
+  const saved = localStorage.getItem(LS_KEYS.currentUser);
+  return saved ? JSON.parse(saved) : null;
+}
+function setCurrentUser(u) { localStorage.setItem(LS_KEYS.currentUser, u ? JSON.stringify(u) : ''); }
+
+function generateMockOrders() {
+  const orders = [];
+  const prods = Object.keys(PRODUCTS);
+  const units = ['jin', 'liang', 'g'];
+  const custs = DEFAULT_CUSTOMERS;
+  for (let d = 1; d <= 21; d++) {
+    const date = `2026-07-${String(d).padStart(2,'0')}`;
+    const n = Math.floor(Math.random() * 6) + 2;
+    for (let i = 0; i < n; i++) {
+      const c = custs[Math.floor(Math.random() * custs.length)];
+      const p = prods[Math.floor(Math.random() * prods.length)];
+      const u = units[Math.floor(Math.random() * units.length)];
+      let q = u === 'jin' ? (Math.random()*4+0.5).toFixed(1) : u==='liang' ? Math.floor(Math.random()*12+1) : Math.floor(Math.random()*400+50);
+      const price = DEFAULT_PRICES[p] + Math.floor((Math.random()-0.5)*10);
+      orders.push({
+        id: Date.now() + Math.random(),
+        date, time: `${String(Math.floor(Math.random()*12)+8).padStart(2,'0')}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}`,
+        customer: c.name, customerId: c.id,
+        product: p, qty: parseFloat(q), unit: u,
+        unitPrice: price,
+        amount: Math.round(parseFloat(q) * UNIT_TO_JIN[u] * price),
+        status: Math.random() > 0.3 ? 'done' : 'pending'
+      });
+    }
+  }
+  return orders;
+}
+
+function formatMoney(n) { return '$' + Math.round(n).toLocaleString(); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function downloadCSV(filename, headers, rows) {
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+// ==================== Tab 切換 ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + tab).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (tab === 'admin') { document.getElementById('admin-date').textContent = new Date().toLocaleDateString('zh-TW'); }
+  if (tab === 'ship') { renderShipList(); }
+}
+
+// ==================== 客戶前台 ====================
+let cart = [];
+let currentCustomer = getCurrentUser();
+
+function initCustomer() {
+  const prices = getPrices();
+  const display = document.getElementById('price-display');
+  display.innerHTML = Object.entries(prices).map(([k,v]) => {
+    const p = PRODUCTS[k];
+    return `<div style="background:white; border-radius:8px; padding:8px; text-align:center;"><div style="color:#888; font-size:11px;">${p.icon} ${p.name.replace(/辣椒-|蒜頭-/,'')}</div><div style="font-weight:700; color:#e65100; font-size:14px;">$${v}</div></div>`;
+  }).join('');
+
+  if (currentCustomer) {
+    document.getElementById('cust-login').classList.add('hidden');
+    document.getElementById('cust-order').classList.remove('hidden');
+    document.getElementById('welcome-name').textContent = currentCustomer;
+    renderCustHistory();
+  }
+}
+
+function customerLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  if (!name) { alert('請輸入店名'); return; }
+  currentCustomer = name;
+  setCurrentUser(name);
+  document.getElementById('cust-login').classList.add('hidden');
+  document.getElementById('cust-order').classList.remove('hidden');
+  document.getElementById('welcome-name').textContent = name;
+  renderCustHistory();
+}
+
+function customerLogout() {
+  currentCustomer = null;
+  setCurrentUser(null);
+  cart = [];
+  document.getElementById('cust-login').classList.remove('hidden');
+  document.getElementById('cust-order').classList.add('hidden');
+  document.getElementById('login-name').value = '';
+}
+
+function updatePreview() {
+  const prod = document.getElementById('order-product').value;
+  const qty = parseFloat(document.getElementById('order-qty').value);
+  const unit = document.getElementById('order-unit').value;
+  const copies = parseInt(document.getElementById('order-copies').value) || 1;
+  const preview = document.getElementById('order-preview');
+  const text = document.getElementById('preview-text');
+  if (!prod || !qty) { preview.classList.add('hidden'); return; }
+  const prices = getPrices();
+  const price = prices[prod] || 0;
+  const jinPerCopy = qty * UNIT_TO_JIN[unit];
+  const totalJin = (jinPerCopy * copies).toFixed(2);
+  const amtPerCopy = Math.round(jinPerCopy * price);
+  const totalAmt = amtPerCopy * copies;
+  text.innerHTML = `${PRODUCTS[prod].name} ${qty}${UNIT_NAMES[unit]} × ${copies}份 = ${totalJin}台斤 × $${price} = <span style="color:#e65100; font-weight:700">${formatMoney(totalAmt)}</span>`;
+  preview.classList.remove('hidden');
+}
+
+function addToCart() {
+  const prod = document.getElementById('order-product').value;
+  const qty = parseFloat(document.getElementById('order-qty').value);
+  const unit = document.getElementById('order-unit').value;
+  const copies = parseInt(document.getElementById('order-copies').value) || 1;
+  if (!prod || !qty || qty <= 0) { alert('請選擇商品並輸入重量'); return; }
+  if (copies < 1) { alert('份數至少為 1'); return; }
+  const prices = getPrices();
+  const price = prices[prod] || 0;
+  const jinPerCopy = qty * UNIT_TO_JIN[unit];
+  const amtPerCopy = Math.round(jinPerCopy * price);
+  const totalAmt = amtPerCopy * copies;
+  cart.push({ product: prod, qty, unit, copies, unitPrice: price, amount: totalAmt, jinPerCopy });
+  renderCart();
+  document.getElementById('order-product').value = '';
+  document.getElementById('order-qty').value = '';
+  document.getElementById('order-copies').value = '1';
+  document.getElementById('order-preview').classList.add('hidden');
+}
+
+function removeCartItem(idx) {
+  cart.splice(idx, 1); renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  const totalDiv = document.getElementById('cart-total');
+  const btn = document.getElementById('btn-submit');
+  document.getElementById('cart-count').textContent = cart.length + ' 項';
+
+  if (cart.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div>尚未加入任何商品</div></div>';
+    totalDiv.classList.add('hidden'); btn.style.display = 'none'; return;
+  }
+
+  let total = 0;
+  container.innerHTML = cart.map((item, i) => {
+    total += item.amount;
+    const copies = item.copies || 1;
+    const perCopyJin = item.jinPerCopy ? item.jinPerCopy.toFixed(2) : (item.qty * UNIT_TO_JIN[item.unit]).toFixed(2);
+    return `<div class="cart-item"><div><span style="font-weight:600">${PRODUCTS[item.product].name}</span> <span style="color:#888; font-size:12px">${item.qty}${UNIT_NAMES[item.unit]} × ${copies}份 (${perCopyJin}斤/份)</span></div><div style="display:flex; align-items:center; gap:10px"><span style="font-weight:700; color:#e65100">${formatMoney(item.amount)}</span><button class="btn-small" style="background:#ffebee; color:#c62828" onclick="removeCartItem(${i})">刪除</button></div></div>`;
+  }).join('');
+
+  totalDiv.innerHTML = `合計：<span style="font-size:20px">${formatMoney(total)}</span>`;
+  totalDiv.classList.remove('hidden');
+  btn.style.display = 'block';
+}
+
+function submitOrder() {
+  if (cart.length === 0) return;
+  const now = new Date();
+  const orders = getOrders();
+  cart.forEach(item => {
+    orders.push({
+      id: Date.now() + Math.random(),
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}),
+      customer: currentCustomer, customerId: 99,
+      product: item.product, qty: item.qty, unit: item.unit,
+      copies: item.copies || 1, jinPerCopy: item.jinPerCopy,
+      unitPrice: item.unitPrice, amount: item.amount,
+      status: 'pending'
+    });
+  });
+  setOrders(orders);
+  alert(`✅ 訂單已送出！共 ${cart.length} 項商品，總計 ${formatMoney(cart.reduce((s,i)=>s+i.amount,0))}`);
+  cart = []; renderCart(); renderCustHistory();
+}
+
+function renderCustHistory() {
+  const tbody = document.getElementById('cust-history');
+  const orders = getOrders().filter(o => o.customer === currentCustomer).sort((a,b) => b.date.localeCompare(a.date)).slice(0, 10);
+  if (orders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty"><div class="empty-icon">📭</div>尚無歷史訂單</td></tr>'; return;
+  }
+  tbody.innerHTML = orders.map(o => {
+    const badge = o.status === 'done' ? '<span class="badge badge-done">已完成</span>' : o.status === 'shipped' ? '<span class="badge badge-shipped">已出貨</span>' : '<span class="badge badge-pending">待處理</span>';
+    return `<tr><td style="font-size:12px; color:#888">${o.date}</td><td>${PRODUCTS[o.product].name}</td><td style="text-align:right; font-weight:600">${formatMoney(o.amount)}</td><td style="text-align:center">${badge}</td></tr>`;
+  }).join('');
+}
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+  initCustomer();
+});
+</script>
+</body>
+</html>
